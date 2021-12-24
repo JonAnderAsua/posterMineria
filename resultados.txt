@@ -1,0 +1,60 @@
+0
+DecisionTreeClassifier(random_state=0)
+0.6883557810692833
+0
+RandomForestClassifier(n_estimators=10, random_state=0)
+0.7058265100272931
+1
+DecisionTreeClassifier(random_state=5)
+0.6910526315789474
+1
+RandomForestClassifier(n_estimators=10, random_state=4)
+0.70802775024777
+2
+DecisionTreeClassifier(random_state=10)
+0.688903914056044
+2
+RandomForestClassifier(n_estimators=10, random_state=8)
+0.7089829837752276
+3
+DecisionTreeClassifier(random_state=15)
+0.6937703934290964
+3
+RandomForestClassifier(n_estimators=10, random_state=12)
+0.7122078126847727
+4
+DecisionTreeClassifier(random_state=20)
+0.6953761111526107
+4
+RandomForestClassifier(n_estimators=10, random_state=16)
+0.7105607810453625
+5
+DecisionTreeClassifier(random_state=25)
+0.6900378688463125
+5
+RandomForestClassifier(n_estimators=10, random_state=20)
+0.7129527123201013
+6
+DecisionTreeClassifier(random_state=30)
+0.6894092922014562
+6
+RandomForestClassifier(n_estimators=10, random_state=24)
+0.7087663625545417
+7
+DecisionTreeClassifier(random_state=35)
+0.6900356539688497
+7
+RandomForestClassifier(n_estimators=10, random_state=28)
+0.7144148747985377
+8
+DecisionTreeClassifier(random_state=40)
+0.6932595611050881
+8
+RandomForestClassifier(n_estimators=10, random_state=32)
+0.7162428155263365
+9
+DecisionTreeClassifier(random_state=45)
+0.6868777603114006
+9
+RandomForestClassifier(n_estimators=10, random_state=36)
+0.7142576513574038

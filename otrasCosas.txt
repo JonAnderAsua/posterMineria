@@ -1,0 +1,142 @@
+# Instantziak kargatu
+tweets = pd.read_csv('ExtractedTweets.csv') #Party (clase), Handle, Tweet
+print(str(len(tweets)) + " tweets han sido cargados")
+tweets['numClass'] = tweets['Party'].map({'Democrat':0, 'Republican':1})
+
+# Dataset osoa train eta test azpimultzoetan banatu (%70 - %30 gutxi gora behera)
+instKop = len(tweets) * 7 // 10 # Instantzia kopuru oso bat hartzeko
+train = tweets.iloc[0:instKop] # 256 instantzia
+test = tweets.iloc[instKop + 1:] # 110 instantzia
+print("El dataset de entrenamiento tiene " + str(len(train)) + " instancias")
+print("El dataset de testeo tiene " + str(len(test)) + " instancias")
+
+
+# Aurreprozesamendua
+def decontracted(phrase):
+    phrase = re.sub(r"n\'t", " not", phrase)  
+    phrase = re.sub(r"\'re", " are", phrase)  
+    phrase = re.sub(r"\'s", " is", phrase)    
+    phrase = re.sub(r"\'d", " would", phrase)  
+    phrase = re.sub(r"\'ll", " will", phrase)   
+    phrase = re.sub(r"\'t", " not", phrase)   
+    phrase = re.sub(r"\'ve", " have", phrase)   
+    phrase = re.sub(r"\'m", " am", phrase)
+    phrase = re.sub(r'http\S+', '', phrase)
+    return phrase
+
+stopwords= ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're" , "you've",\
+            "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', \
+            'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'th ey', 'them', 'their',\
+            'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', "tha t'll", 'these', 'those', \
+            'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'ha d', 'having', 'do', 'does', \
+            'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', \
+            'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after',\
+            'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'ove r', 'under', 'again', 'further',\
+            'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any' , 'both', 'each', 'few', 'more',\
+            'most', 'other', 'some', 'such', 'only', 'own', 'same', 'so', 'than', 'too', 'very', \
+            's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'no w', 'd', 'll', 'm', 'o', 're', \
+            've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 'hadn',\
+            "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't", 'ma', 'might n', "mightn't", 'mustn',\
+            "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wa sn', "wasn't", 'weren', "weren't", \
+            'won', "won't", 'wouldn', "wouldn't"]
+
+def preprocess_text(dff):   
+        preprocessed_text = []   
+        for sentance in dff['Tweet']: 
+            #if 'RT @' in sentance: # RTak kentzeko
+            #    sentance = sentance.split(':')[1]
+            #print("La frase que se va a preprocesar es: " + sentance)
+            sent = decontracted(sentance)      
+            sent = sent.replace('\\r', ' ')     
+            sent = sent.replace('\\"', ' ')     
+            sent = sent.replace('\\n', ' ')  
+            
+            
+            # Karaktere bereziak
+            sent = sent.replace('@', ' ')
+            sent = sent.replace('#', ' ')
+            sent = sent.replace('$', ' ')
+            
+            sent = re.sub('[^A-Za-z0-9]+', ' ', sent)  
+            
+            # https://gist.github.com/sebleier/554280     
+            sent = ' '.join(e for e in sent.split() if e not in stopwords)    
+            preprocessed_text.append(sent.lower().strip()) 
+        return preprocessed_text
+
+#Train eta test datasetak aurreprozesatu
+trainProc = preprocess_text(train)
+testProc = preprocess_text(test)
+
+
+# TF-IDF errepresentazio bektoriala 
+def tfidf(trainProc, testProc):
+    vectorizer = TfidfVectorizer(min_df = 10)
+    train_tfidf = vectorizer.fit_transform(trainProc)
+    test_tfidf = vectorizer.transform(testProc)
+    print("Shape of train matrix after Tfidf : ",train_tfidf.shape)
+    print("Shape of test matrix after Tfidf : ",test_tfidf.shape)
+    feature_names = vectorizer.get_feature_names()
+    train_dense = train_tfidf.todense()
+    train_denselist = train_dense.tolist()
+    train_df = pd.DataFrame(train_denselist, columns=feature_names)
+    test_dense = test_tfidf.todense()
+    test_denselist = test_dense.tolist()
+    test_df = pd.DataFrame(test_denselist, columns=feature_names)
+    return train_df,test_df
+
+trainTfidf, testTfidf = tfidf(trainProc, testProc)
+
+import os
+
+def hiztegiaGorde(hiztegia):
+    file = open("/home/jonander/Mineria/hiztegia.txt", "w")
+    for h in hiztegia:
+        file.write(h + os.linesep)
+    file.close()
+
+def getHiztegia(dataset):
+    hiztegia = []
+    i = 0 
+    for esaldi in dataset: #Dataseteko esaldiak banan-banan aztertu
+        print("Iteración número: " + str(i))
+        i += 1
+        #print("Esaldia: " + str(esaldi))
+        for hitza in re.split(r'\s+', esaldi): #Esaldi bakoitzeko hitzak aztertu
+            #print("Hitza: " + str(hitza))
+            if hitza not in hiztegia: #Hitza hiztegian ez badago
+                hiztegia.append(hitza)
+                
+    hiztegiaGorde(hiztegia)
+
+getHiztegia(trainProc)
+
+def vectorizeBoW(dataset,hiztegia):
+    listaVectores = []
+    i = 0
+    #Hasieratu bektore giztiak
+    for esaldi in dataset:
+        e = []
+        for hitza in re.split(r'\s+', esaldi):
+            e.append(0)
+        listaVectores.append(e) 
+    
+    #Benetazko balioak esleitu
+    for hitza in hiztegia:
+        for esaldi in dataset:
+            
+        
+    return listaVectores
+
+f = open("/home/jonander/Mineria/hiztegia.txt", "r")
+vectores = vectorizeBoW(trainProc, f)
+for i in vectores:
+    print(i)
+
+Y_pos = np.arange(len(classifiers) * 5)
+Y_val = [ x for x in predictScores]
+plt.bar(Y_pos,Y_val, align='center', alpha=0.7)
+plt.xticks(Y_pos, classifiers)
+plt.ylabel('Accuracy Score')
+plt.title('Accuracy of Models')
+plt.show() 
